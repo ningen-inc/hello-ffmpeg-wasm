@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <style>
+      body{
+        margin:0;
+      }
+      .image{
+        width:50px;
+        height:auto;
+      }
+      .loading{
+        display:none;
+      }
+      .loading--enabled{
+        display:inline-block;
+      }
+    </style>
+  </head>
+  <body>
+    <p>crossOriginIsolated: <span class="is-isolated"></span></p>
+    <img class="image image--01" src="assets/img/1.png" alt="1/2">
+    <br>
+    <img class="image image--02" src="assets/img/2.png" alt="2/2">
+    <br>
+    <form class="my-form">
+      <input class="my-form__text" type="text" placeholder="例：山田太郎">
+      <button class="my-form__generate">生成</button>
+      <div class="loading">loading...</div>
+    </form>
+    <script src="./assets/js/ffmpeg/ffmpeg/ffmpeg.min.js"></script>
+    <script>
+      const isIsolated=document.querySelector(".is-isolated");
+      isIsolated.textContent=crossOriginIsolated;
+
+      const myFormText=document.querySelector(".my-form__text");
+      const myFormGenerate=document.querySelector(".my-form__generate");
+      const image01=document.querySelector(".image--01");
+      const image02=document.querySelector(".image--02");
+      const loading=document.querySelector(".loading");
+
+
+      async function generateVideoAsync(images){
+        const { createFFmpeg, fetchFile} = FFmpeg;
+
+        loading.classList.add("loading--enabled");
+        const ffmpeg = createFFmpeg({
+          corePath: './assets/js/ffmpeg/core/ffmpeg-core.js',
+          log: true,
+        });
+        await ffmpeg.load();
+
+        await Promise.all(images.map(async (image, i) => {
+          ffmpeg.FS("writeFile",`image${i}.png`, await fetchFile(image));
+        }));
+        await ffmpeg.run('-r','24','-i','image%d.png','-pix_fmt','rgb24','-f','gif','output.gif');
+        images.forEach(async (image, i) => {
+          ffmpeg.FS("unlink",`image${i}.png`);
+        });
+        const data = ffmpeg.FS("readFile",'output.gif');
+        ffmpeg.FS("unlink","output.gif");
+        try{
+          ffmpeg.exit();
+        }catch(e){
+          // DO NOTHING
+          // console.error(e);
+        }
+        loading.classList.remove("loading--enabled");
+        return data;
+      }
+
+
+      myFormGenerate.addEventListener("click",(e)=>{
+        e.preventDefault();
+        const imageList=[
+          image01,
+          image02,
+        ];
+        const myCanvas=document.createElement("canvas");
+        myCanvas.width=512;
+        myCanvas.height=512;
+        const ctx=myCanvas.getContext("2d");
+
+        const resultList=imageList.map((image)=>{
+          ctx.clearRect(0,0,myCanvas.width,myCanvas.height);
+          ctx.drawImage(image,0,0);
+          ctx.fillStyle = "#f0f";
+          ctx.font = '50px serif';
+          ctx.fillText(myFormText.value,10,50);
+          const result=myCanvas.toDataURL();
+          return result;
+        });
+        console.log(resultList);
+        generateVideoAsync(resultList).then((data)=>{
+          console.log("generated",data);
+          const a=document.createElement("a");
+          a.textContent="ダウンロード";
+          a.download="output.gif";
+          const blog=new Blob([data])
+          a.href=`data:image/gif;base64,${btoa(String.fromCharCode(...data))}`
+
+          document.body.appendChild(a);
+        })
+
+      });
+
+    </script>
+  </body>
+</html>
