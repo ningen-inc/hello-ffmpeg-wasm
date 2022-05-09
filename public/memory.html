@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <style>
+      .run{
+      }
+
+      th,td{
+        border:1px solid #000;
+      }
+    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <p>crossOriginIsolated: <span class="is-isolated"></span></p>
+    <button class="run">run test</button>
+    <table>
+      <theader>
+        <tr>
+          <th>initial</th>
+          <th>maximum</th>
+          <th>shared</th>
+          <th>result</th>
+        </tr>
+      </theader>
+      <tbody class="results">
+      </tbody>
+    </table>
+    <script>
+      const isIsolated=document.querySelector(".is-isolated");
+      isIsolated.textContent=crossOriginIsolated;
+
+
+      const MB=1024*1024;
+      const paramsList=[
+        {
+          initial:4096*MB,
+          maximum:4096*MB,
+        },
+        {
+          initial:2048*MB,
+          maximum:2048*MB,
+        },
+        {
+          initial:1024*MB,
+          maximum:1024*MB,
+        },
+        {
+          initial:512*MB,
+          maximum:512*MB,
+        },
+        {
+          initial:16*MB,
+          maximum:4096*MB,
+        },
+        {
+          initial:16*MB,
+          maximum:2048*MB,
+        },
+        {
+          initial:16*MB,
+          maximum:1024*MB,
+        },
+        {
+          initial:16*MB,
+          maximum:512*MB,
+        },
+      ];
+
+
+      function run(){
+        const resultsTbody = document.querySelector(".results");
+        for(let childNode of resultsTbody.childNodes){
+          childNode.remove();
+        }
+        const sharedList=[true,false];
+        for(const shared of sharedList){
+          for(const params of paramsList){
+            const {initial,maximum}=params;
+            const tr= document.createElement("tr");
+            resultsTbody.append(tr);
+            const initialTd=document.createElement("td");
+            initialTd.textContent=`${initial/MB}MB`;
+            tr.append(initialTd);
+            const maximumTd=document.createElement("td");
+            maximumTd.textContent=`${maximum/MB}MB`;
+            tr.append(maximumTd);
+            const sharedTd=document.createElement("td");
+            sharedTd.textContent=`${shared}`;
+            tr.append(sharedTd);
+            const resultTd=document.createElement("td");
+            resultTd.textContent="fail";
+            try{
+              const page=65536
+              const memory=new WebAssembly.Memory({
+                initial:initial/page,
+                maximum:maximum/page,
+                shared,
+              });
+              resultTd.textContent="pass";
+            }catch(e){
+              // DO NOTHING
+              console.error(e);
+            }
+            tr.append(resultTd);
+          }
+        }
+      }
+
+      const runButton = document.querySelector(".run");
+      runButton.addEventListener("click",run);
+
+
+
+    </script>
+  </body>
+</html>
