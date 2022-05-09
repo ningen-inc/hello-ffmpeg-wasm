@@ -94,13 +94,12 @@
         console.log(resultList);
         generateVideoAsync(resultList).then((data)=>{
           console.log("generated",data);
-          const a=document.createElement("a");
-          a.textContent="ダウンロード";
-          a.download="output.gif";
+          const img=document.createElement("img");
+          img.alt="";
           const blog=new Blob([data])
-          a.href=`data:image/gif;base64,${btoa(String.fromCharCode(...data))}`
+          img.src=`data:image/gif;base64,${btoa(String.fromCharCode(...data))}`
 
-          document.body.appendChild(a);
+          document.body.appendChild(img);
         })
 
       });
