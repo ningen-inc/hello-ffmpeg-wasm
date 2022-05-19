@@ -25,8 +25,13 @@
     <img class="image image--02" src="assets/img/2.png" alt="2/2">
     <br>
     <form class="my-form">
-      <input class="my-form__text" type="text" placeholder="例：山田太郎">
-      <button class="my-form__generate">生成</button>
+      <select class="core">
+        <option value="core">core</option>
+        <option value="core_custom_1024">core_custom_1024</option>
+        <option value="core_custom_32_1024">core_custom_32_1024</option>
+      </select>
+      <input class="my-form__text" type="text" placeholder="ex) Foo Bar">
+      <button class="my-form__generate">Generate GIF</button>
       <div class="loading">loading...</div>
     </form>
     <script src="./assets/js/ffmpeg/ffmpeg/ffmpeg.min.js"></script>
@@ -41,12 +46,12 @@
       const loading=document.querySelector(".loading");
 
 
-      async function generateVideoAsync(images){
+      async function generateVideoAsync(core,images){
         const { createFFmpeg, fetchFile} = FFmpeg;
 
         loading.classList.add("loading--enabled");
         const ffmpeg = createFFmpeg({
-          corePath: './assets/js/ffmpeg/core/ffmpeg-core.js',
+          corePath: `./assets/js/ffmpeg/${core}/ffmpeg-core.js`,
           log: true,
         });
         await ffmpeg.load();
@@ -92,7 +97,8 @@
           return result;
         });
         console.log(resultList);
-        generateVideoAsync(resultList).then((data)=>{
+        const core=document.querySelector(".core");        
+        generateVideoAsync(core.value,resultList).then((data)=>{
           console.log("generated",data);
           const img=document.createElement("img");
           img.alt="";
